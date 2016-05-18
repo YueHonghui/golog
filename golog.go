@@ -163,6 +163,46 @@ func ERR(format string, v ...interface{}) {
 	}
 }
 
+func TRCf(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelTRC {
+		logTRC.Printf(format, v...)
+	}
+}
+
+func DBGf(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelDBG {
+		logDBG.Printf(format, v...)
+	}
+}
+
+func INFf(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelINF {
+		logINF.Printf(format, v...)
+	}
+}
+
+func WRNf(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelWRN {
+		logWRN.Printf(format, v...)
+	}
+}
+
+func ERRf(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelERR {
+		logERR.Printf(format, v...)
+	}
+}
+
 func Fini() {
 	lock.Lock()
 	defer lock.Unlock()
