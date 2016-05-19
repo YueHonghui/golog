@@ -124,8 +124,7 @@ func TRC(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelTRC {
-		logTRC.Printf(format, v...)
-		logTRC.Print(newline)
+		logTRC.Printf(format+newline, v...)
 	}
 }
 
@@ -133,8 +132,7 @@ func DBG(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelDBG {
-		logDBG.Printf(format, v...)
-		logDBG.Print(newline)
+		logDBG.Printf(format+newline, v...)
 	}
 }
 
@@ -142,8 +140,7 @@ func INF(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelINF {
-		logINF.Printf(format, v...)
-		logINF.Print(newline)
+		logINF.Printf(format+newline, v...)
 	}
 }
 
@@ -151,8 +148,7 @@ func WRN(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelWRN {
-		logWRN.Printf(format, v...)
-		logWRN.Print(newline)
+		logWRN.Printf(format+newline, v...)
 	}
 }
 
@@ -160,8 +156,7 @@ func ERR(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelERR {
-		logERR.Printf(format, v...)
-		logERR.Print(newline)
+		logERR.Printf(format+newline, v...)
 	}
 }
 
@@ -169,8 +164,7 @@ func Fatal(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelERR {
-		logFatal.Printf(format, v...)
-		logFatal.Fatal(newline)
+		logFatal.Printf(format+newline, v...)
 	}
 }
 
