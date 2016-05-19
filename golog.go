@@ -22,15 +22,16 @@ const (
 )
 
 var (
-	lock    sync.RWMutex
-	level   int = LevelTRC
-	newline string
-	writer  io.WriteCloser
-	logERR  *log.Logger
-	logWRN  *log.Logger
-	logINF  *log.Logger
-	logDBG  *log.Logger
-	logTRC  *log.Logger
+	lock     sync.RWMutex
+	level    int = LevelTRC
+	newline  string
+	writer   io.WriteCloser
+	logFatal *log.Logger
+	logERR   *log.Logger
+	logWRN   *log.Logger
+	logINF   *log.Logger
+	logDBG   *log.Logger
+	logTRC   *log.Logger
 )
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 	} else {
 		newline = "\n"
 	}
+	logFatal = log.New(os.Stderr, "[FAT]", log.Ldate|log.Ltime|log.Lshortfile)
 	logERR = log.New(os.Stdout, "[ERR]", log.Ldate|log.Ltime|log.Lshortfile)
 	logWRN = log.New(os.Stdout, "[WRN]", log.Ldate|log.Ltime|log.Lshortfile)
 	logINF = log.New(os.Stdout, "[INF]", log.Ldate|log.Ltime|log.Lshortfile)
@@ -99,7 +101,7 @@ func Init(logurl string) (err error) {
 			return
 		}
 	}
-
+	logFatal = log.New(writer, "[FAT]", log.Ldate|log.Ltime|log.Lshortfile)
 	logERR = log.New(writer, "[ERR]", log.Ldate|log.Ltime|log.Lshortfile)
 	logWRN = log.New(writer, "[WRN]", log.Ldate|log.Ltime|log.Lshortfile)
 	logINF = log.New(writer, "[INF]", log.Ldate|log.Ltime|log.Lshortfile)
@@ -163,6 +165,15 @@ func ERR(format string, v ...interface{}) {
 	}
 }
 
+func Fatal(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelERR {
+		logFatal.Printf(format, v...)
+		logFatal.Fatal(newline)
+	}
+}
+
 func TRCf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
@@ -202,6 +213,13 @@ func ERRf(format string, v ...interface{}) {
 		logERR.Printf(format, v...)
 	}
 }
+func Fatalf(format string, v ...interface{}) {
+	lock.RLock()
+	defer lock.RUnlock()
+	if level <= LevelERR {
+		logFatal.Fatalf(format, v...)
+	}
+}
 
 func Fini() {
 	lock.Lock()
@@ -210,6 +228,7 @@ func Fini() {
 		writer.Close()
 		writer = nil
 	}
+	logFatal = log.New(os.Stderr, "[FAT]", log.Ldate|log.Ltime|log.Lshortfile)
 	logERR = log.New(os.Stdout, "[ERR]", log.Ldate|log.Ltime|log.Lshortfile)
 	logWRN = log.New(os.Stdout, "[WRN]", log.Ldate|log.Ltime|log.Lshortfile)
 	logINF = log.New(os.Stdout, "[INF]", log.Ldate|log.Ltime|log.Lshortfile)
