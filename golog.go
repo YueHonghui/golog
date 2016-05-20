@@ -42,15 +42,16 @@ func init() {
 	} else {
 		newline = "\n"
 	}
-	logFatal = log.New(os.Stderr, "[FAT]", log.Ldate|log.Ltime|log.Lshortfile)
-	logERR = log.New(os.Stdout, "[ERR]", log.Ldate|log.Ltime|log.Lshortfile)
-	logWRN = log.New(os.Stdout, "[WRN]", log.Ldate|log.Ltime|log.Lshortfile)
-	logINF = log.New(os.Stdout, "[INF]", log.Ldate|log.Ltime|log.Lshortfile)
-	logDBG = log.New(os.Stdout, "[DBG]", log.Ldate|log.Ltime|log.Lshortfile)
-	logTRC = log.New(os.Stdout, "[TRC]", log.Ldate|log.Ltime|log.Lshortfile)
+	logFatal = log.New(os.Stderr, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logERR = log.New(os.Stdout, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logWRN = log.New(os.Stdout, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logINF = log.New(os.Stdout, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logDBG = log.New(os.Stdout, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logTRC = log.New(os.Stdout, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
 func parseLogUrl(url string) (schema, uri string, keyvalues map[string]string, err error) {
+	keyvalues = make(map[string]string)
 	itms := strings.Split(url, ",")
 	schitms := strings.Split(itms[0], "://")
 	if len(schitms) != 2 {
@@ -101,12 +102,12 @@ func Init(logurl string) (err error) {
 			return
 		}
 	}
-	logFatal = log.New(writer, "[FAT]", log.Ldate|log.Ltime|log.Lshortfile)
-	logERR = log.New(writer, "[ERR]", log.Ldate|log.Ltime|log.Lshortfile)
-	logWRN = log.New(writer, "[WRN]", log.Ldate|log.Ltime|log.Lshortfile)
-	logINF = log.New(writer, "[INF]", log.Ldate|log.Ltime|log.Lshortfile)
-	logDBG = log.New(writer, "[DBG]", log.Ldate|log.Ltime|log.Lshortfile)
-	logTRC = log.New(writer, "[TRC]", log.Ldate|log.Ltime|log.Lshortfile)
+	logFatal = log.New(writer, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logERR = log.New(writer, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logWRN = log.New(writer, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logINF = log.New(writer, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logDBG = log.New(writer, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logTRC = log.New(writer, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
 	return
 }
 
@@ -222,10 +223,10 @@ func Fini() {
 		writer.Close()
 		writer = nil
 	}
-	logFatal = log.New(os.Stderr, "[FAT]", log.Ldate|log.Ltime|log.Lshortfile)
-	logERR = log.New(os.Stdout, "[ERR]", log.Ldate|log.Ltime|log.Lshortfile)
-	logWRN = log.New(os.Stdout, "[WRN]", log.Ldate|log.Ltime|log.Lshortfile)
-	logINF = log.New(os.Stdout, "[INF]", log.Ldate|log.Ltime|log.Lshortfile)
-	logDBG = log.New(os.Stdout, "[DBG]", log.Ldate|log.Ltime|log.Lshortfile)
-	logTRC = log.New(os.Stdout, "[TRC]", log.Ldate|log.Ltime|log.Lshortfile)
+	logFatal = log.New(os.Stderr, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logERR = log.New(os.Stdout, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logWRN = log.New(os.Stdout, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logINF = log.New(os.Stdout, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logDBG = log.New(os.Stdout, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logTRC = log.New(os.Stdout, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
