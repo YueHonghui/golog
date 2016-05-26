@@ -125,7 +125,7 @@ func TRC(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelTRC {
-		logTRC.Printf(format+newline, v...)
+		logTRC.Output(2, fmt.Sprintf(format+newline, v...))
 	}
 }
 
@@ -133,7 +133,7 @@ func DBG(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelDBG {
-		logDBG.Printf(format+newline, v...)
+		logDBG.Output(2, fmt.Sprintf(format+newline, v...))
 	}
 }
 
@@ -141,7 +141,7 @@ func INF(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelINF {
-		logINF.Printf(format+newline, v...)
+		logINF.Output(2, fmt.Sprintf(format+newline, v...))
 	}
 }
 
@@ -149,7 +149,7 @@ func WRN(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelWRN {
-		logWRN.Printf(format+newline, v...)
+		logWRN.Output(2, fmt.Sprintf(format+newline, v...))
 	}
 }
 
@@ -157,23 +157,22 @@ func ERR(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelERR {
-		logERR.Printf(format+newline, v...)
+		logERR.Output(2, fmt.Sprintf(format+newline, v...))
 	}
 }
 
-func Fatal(format string, v ...interface{}) {
+func FAT(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
-	if level <= LevelERR {
-		logFatal.Printf(format+newline, v...)
-	}
+	logFatal.Output(2, fmt.Sprintf(format+newline, v...))
+	os.Exit(1)
 }
 
 func TRCf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelTRC {
-		logTRC.Printf(format, v...)
+		logTRC.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
@@ -181,7 +180,7 @@ func DBGf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelDBG {
-		logDBG.Printf(format, v...)
+		logDBG.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
@@ -189,7 +188,7 @@ func INFf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelINF {
-		logINF.Printf(format, v...)
+		logINF.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
@@ -197,7 +196,7 @@ func WRNf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelWRN {
-		logWRN.Printf(format, v...)
+		logWRN.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
@@ -205,15 +204,14 @@ func ERRf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
 	if level <= LevelERR {
-		logERR.Printf(format, v...)
+		logERR.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 func Fatalf(format string, v ...interface{}) {
 	lock.RLock()
 	defer lock.RUnlock()
-	if level <= LevelERR {
-		logFatal.Fatalf(format, v...)
-	}
+	logFatal.Output(2, fmt.Sprintf(format, v...))
+	os.Exit(1)
 }
 
 func Fini() {
