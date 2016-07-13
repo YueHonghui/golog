@@ -22,32 +22,52 @@ const (
 )
 
 var (
-	lock     sync.RWMutex
-	level    int = LevelTRC
-	newline  string
-	writer   io.WriteCloser
-	logFatal *log.Logger
-	logERR   *log.Logger
-	logWRN   *log.Logger
-	logINF   *log.Logger
-	logDBG   *log.Logger
-	logTRC   *log.Logger
+	ErrLevelInvalid = errors.New("Level invalid. Level must be TRC|DBG|INF|WRN|ERR")
 )
 
-func init() {
-	lock.Lock()
-	defer lock.Unlock()
-	if runtime.GOOS == "windows" {
-		newline = "\r\n"
+var (
+	glock     sync.RWMutex
+	glevel    int = LevelTRC
+	gnewline  string
+	gwriter   io.WriteCloser
+	glogFatal *log.Logger
+	glogERR   *log.Logger
+	glogWRN   *log.Logger
+	glogINF   *log.Logger
+	glogDBG   *log.Logger
+	glogTRC   *log.Logger
+)
+
+func ParseLevel(lv string) (int, bool) {
+	if lv == "TRC" {
+		return LevelTRC, true
+	} else if lv == "DBG" {
+		return LevelDBG, true
+	} else if lv == "INF" {
+		return LevelINF, true
+	} else if lv == "WRN" {
+		return LevelWRN, true
+	} else if lv == "ERR" {
+		return LevelERR, true
 	} else {
-		newline = "\n"
+		return LevelTRC, false
 	}
-	logFatal = log.New(os.Stderr, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logERR = log.New(os.Stdout, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logWRN = log.New(os.Stdout, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logINF = log.New(os.Stdout, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logDBG = log.New(os.Stdout, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logTRC = log.New(os.Stdout, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+func init() {
+	glock.Lock()
+	defer glock.Unlock()
+	if runtime.GOOS == "windows" {
+		gnewline = "\r\n"
+	} else {
+		gnewline = "\n"
+	}
+	glogFatal = log.New(os.Stderr, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogERR = log.New(os.Stdout, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogWRN = log.New(os.Stdout, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogINF = log.New(os.Stdout, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogDBG = log.New(os.Stdout, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogTRC = log.New(os.Stdout, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
 func parseLogUrl(url string) (schema, uri string, keyvalues map[string]string, err error) {
@@ -77,7 +97,7 @@ func parseLogUrl(url string) (schema, uri string, keyvalues map[string]string, e
 
 //@logurl
 //    logurl used to determin to which place and how the log will be write, generate format is "[schema]://[uri],[key=value]...", for example
-//	file:///home/logs/demo,[rotate=day|none]
+//	file:///home/logs/demo,[rotate=day|none],[level=TRC|DBG|INF|WRN|ERR]
 func Init(logurl string) (err error) {
 	var uri string
 	var kvs map[string]string
@@ -85,146 +105,154 @@ func Init(logurl string) (err error) {
 	if err != nil {
 		return
 	}
-	lock.Lock()
-	defer lock.Unlock()
-	if writer != nil {
-		logERR.Fatalf("InitLogger must called only one time%s", newline)
+	glock.Lock()
+	defer glock.Unlock()
+	if gwriter != nil {
+		glogERR.Fatalf("InitLogger must called only one time%s", gnewline)
 		return
 	}
 	if rt, ok := kvs["rotate"]; ok && rt == "day" {
-		writer, err = rfw.New(uri)
+		gwriter, err = rfw.New(uri)
 		if err != nil {
 			return
 		}
 	} else {
-		writer, err = os.OpenFile(uri, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
+		gwriter, err = os.OpenFile(uri, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0664)
 		if err != nil {
 			return
 		}
 	}
-	logFatal = log.New(writer, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logERR = log.New(writer, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logWRN = log.New(writer, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logINF = log.New(writer, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logDBG = log.New(writer, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logTRC = log.New(writer, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
+	if lv, ok := kvs["level"]; ok {
+		level, valid := ParseLevel(lv)
+		if !valid {
+			gwriter.Close()
+			return ErrLevelInvalid
+		}
+		SetLevel(level)
+	}
+	glogFatal = log.New(gwriter, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogERR = log.New(gwriter, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogWRN = log.New(gwriter, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogINF = log.New(gwriter, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogDBG = log.New(gwriter, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogTRC = log.New(gwriter, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
 	return
 }
 
 func SetLevel(level int) {
-	lock.Lock()
-	defer lock.Unlock()
-	level = level
+	glock.Lock()
+	defer glock.Unlock()
+	glevel = level
 }
 
 func GetLevel() int {
-	return level
+	return glevel
 }
 
 func TRC(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelTRC {
-		logTRC.Output(2, fmt.Sprintf(format+newline, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelTRC {
+		glogTRC.Output(2, fmt.Sprintf(format+gnewline, v...))
 	}
 }
 
 func DBG(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelDBG {
-		logDBG.Output(2, fmt.Sprintf(format+newline, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelDBG {
+		glogDBG.Output(2, fmt.Sprintf(format+gnewline, v...))
 	}
 }
 
 func INF(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelINF {
-		logINF.Output(2, fmt.Sprintf(format+newline, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelINF {
+		glogINF.Output(2, fmt.Sprintf(format+gnewline, v...))
 	}
 }
 
 func WRN(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelWRN {
-		logWRN.Output(2, fmt.Sprintf(format+newline, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelWRN {
+		glogWRN.Output(2, fmt.Sprintf(format+gnewline, v...))
 	}
 }
 
 func ERR(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelERR {
-		logERR.Output(2, fmt.Sprintf(format+newline, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelERR {
+		glogERR.Output(2, fmt.Sprintf(format+gnewline, v...))
 	}
 }
 
 func FAT(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	logFatal.Output(2, fmt.Sprintf(format+newline, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	glogFatal.Output(2, fmt.Sprintf(format+gnewline, v...))
 	os.Exit(1)
 }
 
 func TRCf(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelTRC {
-		logTRC.Output(2, fmt.Sprintf(format, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelTRC {
+		glogTRC.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
 func DBGf(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelDBG {
-		logDBG.Output(2, fmt.Sprintf(format, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelDBG {
+		glogDBG.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
 func INFf(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelINF {
-		logINF.Output(2, fmt.Sprintf(format, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelINF {
+		glogINF.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
 func WRNf(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelWRN {
-		logWRN.Output(2, fmt.Sprintf(format, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelWRN {
+		glogWRN.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 
 func ERRf(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	if level <= LevelERR {
-		logERR.Output(2, fmt.Sprintf(format, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	if glevel <= LevelERR {
+		glogERR.Output(2, fmt.Sprintf(format, v...))
 	}
 }
 func Fatalf(format string, v ...interface{}) {
-	lock.RLock()
-	defer lock.RUnlock()
-	logFatal.Output(2, fmt.Sprintf(format, v...))
+	glock.RLock()
+	defer glock.RUnlock()
+	glogFatal.Output(2, fmt.Sprintf(format, v...))
 	os.Exit(1)
 }
 
 func Fini() {
-	lock.Lock()
-	defer lock.Unlock()
-	if writer != nil {
-		writer.Close()
-		writer = nil
+	glock.Lock()
+	defer glock.Unlock()
+	if gwriter != nil {
+		gwriter.Close()
+		gwriter = nil
 	}
-	logFatal = log.New(os.Stderr, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logERR = log.New(os.Stdout, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logWRN = log.New(os.Stdout, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logINF = log.New(os.Stdout, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logDBG = log.New(os.Stdout, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
-	logTRC = log.New(os.Stdout, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogFatal = log.New(os.Stderr, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogERR = log.New(os.Stdout, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogWRN = log.New(os.Stdout, "[WRN] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogINF = log.New(os.Stdout, "[INF] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogDBG = log.New(os.Stdout, "[DBG] ", log.Ldate|log.Ltime|log.Lshortfile)
+	glogTRC = log.New(os.Stdout, "[TRC] ", log.Ldate|log.Ltime|log.Lshortfile)
 }
