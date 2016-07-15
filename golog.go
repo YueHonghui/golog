@@ -128,7 +128,7 @@ func Init(logurl string) (err error) {
 			gwriter.Close()
 			return ErrLevelInvalid
 		}
-		SetLevel(level)
+		glevel = level
 	}
 	glogFatal = log.New(gwriter, "[FAT] ", log.Ldate|log.Ltime|log.Lshortfile)
 	glogERR = log.New(gwriter, "[ERR] ", log.Ldate|log.Ltime|log.Lshortfile)
